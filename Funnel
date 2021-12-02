@@ -1,0 +1,17 @@
+select 
+  count(distinct case when funnel_step='PDP' then  UNIQUE_VISIT_ID  end) pdp_sessions_cnt
+  from ecom_sandbox.funnel_testing
+  match_recognize (
+      partition by unique_visit_id
+      order by hit_number
+      MEASURES classifier as funnel_step
+      all rows per match
+      PATTERN({- Browse -} {- sessions* -} PDP+)
+      DEFINE
+      Browse as event_category = 'eec' AND event_action = 'impression' AND event_label IN ('browse','search-results','deals','brand-page','campaign'),
+      PDP as event_category = 'eec'AND event_action = 'detail' AND event_label IN ('In Stock','Out of Stock') AND ecommerce_action_type = '2',
+//      ATC as event_category ='eec' AND event_action = 'addToCart',
+      sessions as unique_hit_id is not null,
+//      checkout as checkout_event_category ='checkouts',
+//      Purchase as event_category = 'eec' AND event_action = 'purchase' and transaction_id is not NULL
+    )
